@@ -298,11 +298,12 @@
         const viewResultsBtn = document.getElementById('viewResultsBtn');
         const passwordError = document.getElementById('password-error');
         
-        const TEACHER_PASSWORD = 'teacher';
+        const TEACHER_PASSWORD = '988';
 
         let studentName = '';
         let score = 0;
         let ongoingTestRef;
+        let quizActive = false; // Виправлення: новий прапорець для відстеження активності тесту
 
         // Ініціалізація Firebase
         async function initializeFirebase() {
@@ -338,6 +339,7 @@
                         startTest();
                     }).catch(err => {
                         console.error(`Помилка під час спроби увімкнути повноекранний режим: ${err.message}. Тест буде запущено в звичайному режимі.`);
+                        // Виправлення: запускаємо тест навіть якщо повноекранний режим неможливий
                         startTest();
                     });
                 } else {
@@ -355,7 +357,8 @@
         });
 
         viewResultsBtn.addEventListener('click', () => {
-            const password = teacherPasswordInput.value;
+            // Виправлення: Додано .trim() для надійної перевірки пароля
+            const password = teacherPasswordInput.value.trim();
             if (password === TEACHER_PASSWORD) {
                 passwordError.style.display = 'none';
                 showTeacherView();
@@ -365,7 +368,8 @@
         });
 
         document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement && document.querySelector('#quiz').style.display !== 'none') {
+            // Виправлення: Перевіряємо, чи тест активний, щоб уникнути помилкового завершення
+            if (quizActive && !document.fullscreenElement) {
                 fullscreenMessage.style.display = 'block';
                 // Завершуємо тест, якщо учень вийшов з повноекранного режиму
                 endTestDueToFullscreenExit();
@@ -403,6 +407,7 @@
                     timestamp: new Date().toISOString()
                 });
             }
+            quizActive = true; // Виправлення: Встановлюємо прапорець, що тест активний
         }
 
         submitBtn.addEventListener('click', async () => {
@@ -505,9 +510,11 @@
         }
 
         function showResults() {
+            // Виправлення: Перевіряємо, чи ми взагалі в повноекранному режимі, щоб уникнути помилок
             if (document.fullscreenElement) {
                 document.exitFullscreen();
             }
+            quizActive = false; // Виправлення: Встановлюємо прапорець, що тест не активний
 
             quizContainer.style.display = 'none';
             submitBtn.style.display = 'none';
@@ -526,6 +533,7 @@
         }
 
         function endTestDueToFullscreenExit() {
+            quizActive = false;
             quizContainer.style.display = 'none';
             submitBtn.style.display = 'none';
             resultDiv.style.display = 'block';
