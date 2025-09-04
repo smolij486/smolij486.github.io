@@ -239,10 +239,6 @@
         </div>
     </div>
 
-    <div id="fullscreen-message" class="message-box">
-        <p>Тест буде завершено. Будь ласка, не виходьте з повноекранного режиму.</p>
-    </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -288,7 +284,6 @@
         const submitBtn = document.getElementById('submitBtn');
         const resultDiv = document.getElementById('result');
         const quizMainContainer = document.querySelector('.quiz-container');
-        const fullscreenMessage = document.getElementById('fullscreen-message');
         const teacherLogin = document.getElementById('teacher-login');
         const teacherView = document.getElementById('teacher-view');
         const resultsList = document.getElementById('results-list');
@@ -303,7 +298,7 @@
         let studentName = '';
         let score = 0;
         let ongoingTestRef;
-        let quizActive = false; // Виправлення: новий прапорець для відстеження активності тесту
+        let quizActive = false; 
 
         // Ініціалізація Firebase
         async function initializeFirebase() {
@@ -339,7 +334,7 @@
                         startTest();
                     }).catch(err => {
                         console.error(`Помилка під час спроби увімкнути повноекранний режим: ${err.message}. Тест буде запущено в звичайному режимі.`);
-                        // Виправлення: запускаємо тест навіть якщо повноекранний режим неможливий
+                        // Тест буде запущено в звичайному режимі, навіть якщо повноекранний режим неможливий
                         startTest();
                     });
                 } else {
@@ -357,24 +352,12 @@
         });
 
         viewResultsBtn.addEventListener('click', () => {
-            // Виправлення: Додано .trim() для надійної перевірки пароля
             const password = teacherPasswordInput.value.trim();
             if (password === TEACHER_PASSWORD) {
                 passwordError.style.display = 'none';
                 showTeacherView();
             } else {
                 passwordError.style.display = 'block';
-            }
-        });
-
-        document.addEventListener('fullscreenchange', () => {
-            // Виправлення: Перевіряємо, чи тест активний, щоб уникнути помилкового завершення
-            if (quizActive && !document.fullscreenElement) {
-                fullscreenMessage.style.display = 'block';
-                // Завершуємо тест, якщо учень вийшов з повноекранного режиму
-                endTestDueToFullscreenExit();
-            } else {
-                 fullscreenMessage.style.display = 'none';
             }
         });
 
@@ -407,7 +390,7 @@
                     timestamp: new Date().toISOString()
                 });
             }
-            quizActive = true; // Виправлення: Встановлюємо прапорець, що тест активний
+            quizActive = true; 
         }
 
         submitBtn.addEventListener('click', async () => {
@@ -510,11 +493,10 @@
         }
 
         function showResults() {
-            // Виправлення: Перевіряємо, чи ми взагалі в повноекранному режимі, щоб уникнути помилок
+            // Виправлення: Більше не залежимо від повноекранного режиму для завершення
             if (document.fullscreenElement) {
                 document.exitFullscreen();
             }
-            quizActive = false; // Виправлення: Встановлюємо прапорець, що тест не активний
 
             quizContainer.style.display = 'none';
             submitBtn.style.display = 'none';
@@ -529,19 +511,6 @@
                 <p>Оцінка: ${grade}</p>
             `;
             // Видаляємо дані про поточний тест, оскільки він завершений
-            deleteDoc(ongoingTestRef).catch(e => console.error("Помилка видалення тимчасових даних:", e));
-        }
-
-        function endTestDueToFullscreenExit() {
-            quizActive = false;
-            quizContainer.style.display = 'none';
-            submitBtn.style.display = 'none';
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = `
-                <h2>Тест завершено</h2>
-                <p>Ви вийшли з повноекранного режиму. Тест автоматично завершено.</p>
-                <p>Будь ласка, зверніться до вчителя для повторного проходження.</p>
-            `;
             deleteDoc(ongoingTestRef).catch(e => console.error("Помилка видалення тимчасових даних:", e));
         }
 
