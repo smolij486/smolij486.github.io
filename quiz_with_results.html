@@ -241,16 +241,19 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDoc, setDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // Використання глобальних змінних, наданих середовищем
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const firebaseConfig = {
+          apiKey: "AIzaSyAQBfq2q04-D3QYutz5kY82DgjxCx89Pxw",
+          authDomain: "тест-просвітництво-9клас.firebaseapp.com",
+          projectId: "тест-просвітництво-9клас",
+          storageBucket: "тест-просвітництво-9клас.appspot.com",
+          messagingSenderId: "276370428402",
+          appId: "1:276370428402:web:118e7e1704279b9a527c24"
+        };
         
-        // Ініціалізація Firebase
         let app;
         let db;
         let auth;
@@ -300,18 +303,17 @@
         let ongoingTestRef;
         let quizActive = false; 
 
-        // Ініціалізація Firebase
         async function initializeFirebase() {
             try {
+                if (!firebaseConfig.apiKey) {
+                    throw new Error("Конфігурація Firebase не знайдена. Будь ласка, вставте її в код.");
+                }
+
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
                 
                 firebaseStatus.textContent = 'Статус Firebase: Підключено';
                 firebaseStatus.classList.add('status-connected');
@@ -334,7 +336,6 @@
                         startTest();
                     }).catch(err => {
                         console.error(`Помилка під час спроби увімкнути повноекранний режим: ${err.message}. Тест буде запущено в звичайному режимі.`);
-                        // Тест буде запущено в звичайному режимі, навіть якщо повноекранний режим неможливий
                         startTest();
                     });
                 } else {
@@ -367,21 +368,17 @@
             quizContainer.style.display = 'block';
             submitBtn.style.display = 'block';
             
-            // Перевіряємо, чи існує збережений тест для цього учня
-            ongoingTestRef = doc(db, `artifacts/${appId}/public/data/ongoing_quizzes`, studentName);
+            ongoingTestRef = doc(db, 'ongoing_quizzes', studentName);
             const ongoingTestSnap = await getDoc(ongoingTestRef);
 
             if (ongoingTestSnap.exists()) {
-                // Відновлюємо тест із збережених даних
                 const savedData = ongoingTestSnap.data();
                 console.log("Відновлюємо тест із збережених даних:", savedData);
                 loadQuiz(savedData.answers || {});
                 score = savedData.score || 0;
             } else {
-                // Починаємо новий тест
                 console.log("Починаємо новий тест.");
                 loadQuiz({});
-                // Створюємо новий запис у базі даних
                 await setDoc(ongoingTestRef, {
                     studentName: studentName,
                     answers: {},
@@ -399,7 +396,7 @@
         });
 
         function loadQuiz(savedAnswers) {
-            quizContainer.innerHTML = ''; // Очищаємо попередні питання
+            quizContainer.innerHTML = ''; 
             quizData.questions.forEach((q, index) => {
                 const questionBlock = document.createElement('div');
                 questionBlock.classList.add('question-block');
@@ -416,7 +413,6 @@
                 `;
                 quizContainer.appendChild(questionBlock);
 
-                // Додаємо слухача для збереження кожної відповіді
                 const radioButtons = questionBlock.querySelectorAll(`input[name="question${index}"]`);
                 radioButtons.forEach(radio => {
                     radio.addEventListener('change', (e) => {
@@ -429,14 +425,12 @@
 
         async function saveProgress(questionIndex, selectedAnswer) {
             const currentAnswers = {};
-            // Збираємо всі поточні відповіді
             quizData.questions.forEach((q, index) => {
                 const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
                 if (selectedOption) {
                     currentAnswers[index] = parseInt(selectedOption.value);
                 }
             });
-            // Оновлюємо рахунок, щоб він був актуальним
             let currentScore = 0;
             for (const key in currentAnswers) {
                 if (quizData.questions[key].answerOptions[currentAnswers[key]].isCorrect) {
@@ -444,7 +438,6 @@
                 }
             }
             score = currentScore;
-            // Зберігаємо в Firestore
             try {
                 await setDoc(ongoingTestRef, {
                     studentName: studentName,
@@ -488,12 +481,10 @@
                     isCorrect: isCorrect
                 });
             });
-            // Зберігаємо фінальний результат разом з деталями
             await saveResultToFirestore(studentName, score, quizData.questions.length, getGrade(score), detailedResults);
         }
 
         function showResults() {
-            // Виправлення: Більше не залежимо від повноекранного режиму для завершення
             if (document.fullscreenElement) {
                 document.exitFullscreen();
             }
@@ -510,7 +501,6 @@
                 <p>Кількість правильних відповідей: ${score} з ${totalQuestions}</p>
                 <p>Оцінка: ${grade}</p>
             `;
-            // Видаляємо дані про поточний тест, оскільки він завершений
             deleteDoc(ongoingTestRef).catch(e => console.error("Помилка видалення тимчасових даних:", e));
         }
 
@@ -535,7 +525,7 @@
                 return;
             }
             try {
-                const resultsCollection = collection(db, `artifacts/${appId}/public/data/quiz_results`);
+                const resultsCollection = collection(db, 'quiz_results');
                 await addDoc(resultsCollection, {
                     studentName: name,
                     score: score,
@@ -562,7 +552,7 @@
             }
 
             try {
-                const resultsCollection = collection(db, `artifacts/${appId}/public/data/quiz_results`);
+                const resultsCollection = collection(db, 'quiz_results');
                 const querySnapshot = await getDocs(resultsCollection);
                 
                 resultsList.innerHTML = '';
