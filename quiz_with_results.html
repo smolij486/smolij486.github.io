@@ -57,20 +57,24 @@
             outline: none;
             border-color: #007bff;
         }
-        #startQuizBtn {
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        #startQuizBtn, #teacherPanelBtn, #viewResultsBtn {
             padding: 12px 30px;
             font-size: 1em;
-            background-color: #007bff;
             color: #fff;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s, transform 0.2s;
         }
-        #startQuizBtn:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-        }
+        #startQuizBtn { background-color: #007bff; }
+        #startQuizBtn:hover { background-color: #0056b3; transform: translateY(-2px); }
+        #teacherPanelBtn { background-color: #6c757d; }
+        #teacherPanelBtn:hover { background-color: #5a6268; transform: translateY(-2px); }
         .question-block {
             margin-bottom: 25px;
             padding: 20px;
@@ -153,21 +157,6 @@
             padding: 10px;
             border-bottom: 1px solid #ddd;
         }
-        #view-results-btn {
-            padding: 12px 30px;
-            font-size: 1em;
-            background-color: #17a2b8;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            margin-top: 20px;
-        }
-        #view-results-btn:hover {
-            background-color: #138496;
-            transform: translateY(-2px);
-        }
         .error-message {
             color: #dc3545;
             margin-top: -10px;
@@ -189,6 +178,33 @@
             color: #dc3545;
             font-weight: bold;
         }
+        #teacher-login {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .detailed-result-item {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .detailed-result-item .question-text {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+        .detailed-result-item p {
+            margin: 5px 0;
+        }
+        .detailed-result-item .user-answer {
+            color: #007bff;
+        }
+        .detailed-result-item .correct-answer {
+            color: #28a745;
+        }
     </style>
 </head>
 <body>
@@ -199,17 +215,28 @@
             <label for="studentName">Введіть ваше прізвище:</label>
             <input type="text" id="studentName" placeholder="Наприклад, Шевченко" required>
             <div id="name-error" class="error-message">Будь ласка, введіть ваше прізвище.</div>
-            <button id="startQuizBtn">Почати тест</button>
+            <div class="btn-group">
+                <button id="startQuizBtn">Почати тест</button>
+                <button id="teacherPanelBtn">Панель вчителя</button>
+            </div>
         </div>
+
         <div id="quiz" style="display:none;"></div>
         <button id="submitBtn" style="display:none;">Завершити тест</button>
         <div id="result" style="display:none;"></div>
+
+        <div id="teacher-login">
+            <h2>Доступ для вчителя</h2>
+            <p>Введіть пароль, щоб переглянути результати:</p>
+            <input type="password" id="teacher-password" placeholder="Пароль">
+            <div id="password-error" class="error-message">Неправильний пароль.</div>
+            <button id="viewResultsBtn">Переглянути результати</button>
+        </div>
+
         <div id="teacher-view" style="display:none;">
             <h2>Збережені результати</h2>
-            <p>Ваш ідентифікатор користувача: <span id="user-id-display"></span></p>
             <ul id="results-list"></ul>
         </div>
-        <button id="view-results-btn">Переглянути результати</button>
     </div>
 
     <div id="fullscreen-message" class="message-box">
@@ -219,18 +246,18 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDoc, setDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // Використання глобальних змінних, наданих середовищем
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
+        
         // Ініціалізація Firebase
         let app;
         let db;
         let auth;
-        let userId = 'anon'; // Початкове значення
         
         const quizData = {
             "questions": [
@@ -255,43 +282,44 @@
 
         const studentNameInput = document.getElementById('studentName');
         const startQuizBtn = document.getElementById('startQuizBtn');
+        const teacherPanelBtn = document.getElementById('teacherPanelBtn');
         const registrationForm = document.getElementById('registration-form');
         const quizContainer = document.getElementById('quiz');
         const submitBtn = document.getElementById('submitBtn');
         const resultDiv = document.getElementById('result');
         const quizMainContainer = document.querySelector('.quiz-container');
         const fullscreenMessage = document.getElementById('fullscreen-message');
-        const viewResultsBtn = document.getElementById('view-results-btn');
+        const teacherLogin = document.getElementById('teacher-login');
         const teacherView = document.getElementById('teacher-view');
         const resultsList = document.getElementById('results-list');
         const nameError = document.getElementById('name-error');
-        const userIdDisplay = document.getElementById('user-id-display');
         const firebaseStatus = document.getElementById('firebase-status');
+        const teacherPasswordInput = document.getElementById('teacher-password');
+        const viewResultsBtn = document.getElementById('viewResultsBtn');
+        const passwordError = document.getElementById('password-error');
+        
+        const TEACHER_PASSWORD = 'teacher';
 
         let studentName = '';
         let score = 0;
+        let ongoingTestRef;
 
         // Ініціалізація Firebase
         async function initializeFirebase() {
             try {
-                // Ініціалізуємо додаток Firebase за допомогою наданої конфігурації
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                // Перевіряємо, чи існує токен для автентифікації
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
                     await signInAnonymously(auth);
                 }
                 
-                // Отримуємо UID користувача після автентифікації
-                userId = auth.currentUser.uid;
-                userIdDisplay.textContent = userId;
                 firebaseStatus.textContent = 'Статус Firebase: Підключено';
                 firebaseStatus.classList.add('status-connected');
-                console.log('Firebase успішно ініціалізовано. UID користувача:', userId);
+                console.log('Firebase успішно ініціалізовано.');
             } catch (error) {
                 firebaseStatus.textContent = 'Статус Firebase: Помилка підключення';
                 firebaseStatus.classList.add('status-error');
@@ -321,36 +349,69 @@
             }
         });
 
+        teacherPanelBtn.addEventListener('click', () => {
+            registrationForm.style.display = 'none';
+            teacherLogin.style.display = 'flex';
+        });
+
+        viewResultsBtn.addEventListener('click', () => {
+            const password = teacherPasswordInput.value;
+            if (password === TEACHER_PASSWORD) {
+                passwordError.style.display = 'none';
+                showTeacherView();
+            } else {
+                passwordError.style.display = 'block';
+            }
+        });
+
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement && document.querySelector('#quiz').style.display !== 'none') {
                 fullscreenMessage.style.display = 'block';
-                setTimeout(() => {
-                    // Simulating a close, though window.close() may not work in all browsers
-                    window.location.href = 'about:blank';
-                }, 3000);
+                // Завершуємо тест, якщо учень вийшов з повноекранного режиму
+                endTestDueToFullscreenExit();
             } else {
                  fullscreenMessage.style.display = 'none';
             }
         });
 
-        function startTest() {
+        async function startTest() {
             quizMainContainer.classList.add('show');
             registrationForm.style.display = 'none';
             quizContainer.style.display = 'block';
             submitBtn.style.display = 'block';
-            loadQuiz();
+            
+            // Перевіряємо, чи існує збережений тест для цього учня
+            ongoingTestRef = doc(db, `artifacts/${appId}/public/data/ongoing_quizzes`, studentName);
+            const ongoingTestSnap = await getDoc(ongoingTestRef);
+
+            if (ongoingTestSnap.exists()) {
+                // Відновлюємо тест із збережених даних
+                const savedData = ongoingTestSnap.data();
+                console.log("Відновлюємо тест із збережених даних:", savedData);
+                loadQuiz(savedData.answers || {});
+                score = savedData.score || 0;
+            } else {
+                // Починаємо новий тест
+                console.log("Починаємо новий тест.");
+                loadQuiz({});
+                // Створюємо новий запис у базі даних
+                await setDoc(ongoingTestRef, {
+                    studentName: studentName,
+                    answers: {},
+                    score: 0,
+                    totalQuestions: quizData.questions.length,
+                    timestamp: new Date().toISOString()
+                });
+            }
         }
 
-        submitBtn.addEventListener('click', () => {
-            checkAnswers();
+        submitBtn.addEventListener('click', async () => {
+            await checkAnswersAndSave();
             showResults();
         });
 
-        viewResultsBtn.addEventListener('click', () => {
-            showTeacherView();
-        });
-
-        function loadQuiz() {
+        function loadQuiz(savedAnswers) {
+            quizContainer.innerHTML = ''; // Очищаємо попередні питання
             quizData.questions.forEach((q, index) => {
                 const questionBlock = document.createElement('div');
                 questionBlock.classList.add('question-block');
@@ -359,28 +420,88 @@
                     <ul class="answer-options">
                         ${q.answerOptions.map((option, i) => `
                             <li class="answer-option">
-                                <input type="radio" id="q${index}-option${i}" name="question${index}" value="${i}">
+                                <input type="radio" id="q${index}-option${i}" name="question${index}" value="${i}" ${savedAnswers[index] == i ? 'checked' : ''}>
                                 <label for="q${index}-option${i}">${option.text}</label>
                             </li>
                         `).join('')}
                     </ul>
                 `;
                 quizContainer.appendChild(questionBlock);
+
+                // Додаємо слухача для збереження кожної відповіді
+                const radioButtons = questionBlock.querySelectorAll(`input[name="question${index}"]`);
+                radioButtons.forEach(radio => {
+                    radio.addEventListener('change', (e) => {
+                        const newAnswer = parseInt(e.target.value);
+                        saveProgress(index, newAnswer);
+                    });
+                });
             });
         }
 
-        function checkAnswers() {
-            score = 0;
+        async function saveProgress(questionIndex, selectedAnswer) {
+            const currentAnswers = {};
+            // Збираємо всі поточні відповіді
             quizData.questions.forEach((q, index) => {
                 const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
                 if (selectedOption) {
+                    currentAnswers[index] = parseInt(selectedOption.value);
+                }
+            });
+            // Оновлюємо рахунок, щоб він був актуальним
+            let currentScore = 0;
+            for (const key in currentAnswers) {
+                if (quizData.questions[key].answerOptions[currentAnswers[key]].isCorrect) {
+                    currentScore++;
+                }
+            }
+            score = currentScore;
+            // Зберігаємо в Firestore
+            try {
+                await setDoc(ongoingTestRef, {
+                    studentName: studentName,
+                    answers: currentAnswers,
+                    score: currentScore,
+                    totalQuestions: quizData.questions.length,
+                    timestamp: new Date().toISOString()
+                });
+                console.log("Прогрес успішно збережено.");
+            } catch (e) {
+                console.error("Помилка при збереженні прогресу: ", e);
+            }
+        }
+
+        async function checkAnswersAndSave() {
+            score = 0;
+            const finalAnswers = {};
+            const detailedResults = [];
+            quizData.questions.forEach((q, index) => {
+                const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
+                let studentAnswerText = 'Не обрано';
+                let isCorrect = false;
+
+                if (selectedOption) {
                     const selectedAnswerIndex = parseInt(selectedOption.value);
-                    const isCorrect = q.answerOptions[selectedAnswerIndex].isCorrect;
+                    studentAnswerText = q.answerOptions[selectedAnswerIndex].text;
+                    isCorrect = q.answerOptions[selectedAnswerIndex].isCorrect;
+                    finalAnswers[index] = selectedAnswerIndex;
                     if (isCorrect) {
                         score++;
                     }
                 }
+
+                const correctAnswerText = q.answerOptions.find(opt => opt.isCorrect).text;
+
+                detailedResults.push({
+                    questionNumber: q.questionNumber,
+                    questionText: q.question,
+                    studentAnswer: studentAnswerText,
+                    correctAnswer: correctAnswerText,
+                    isCorrect: isCorrect
+                });
             });
+            // Зберігаємо фінальний результат разом з деталями
+            await saveResultToFirestore(studentName, score, quizData.questions.length, getGrade(score), detailedResults);
         }
 
         function showResults() {
@@ -393,58 +514,57 @@
             resultDiv.style.display = 'block';
 
             const totalQuestions = quizData.questions.length;
-            let grade;
-
-            // Логіка оцінювання за 12-бальною шкалою
-            if (score >= 16) {
-                grade = 'Високий рівень (12)';
-            } else if (score >= 15) {
-                grade = 'Високий рівень (11)';
-            } else if (score >= 14) {
-                grade = 'Високий рівень (10)';
-            } else if (score >= 12) {
-                grade = 'Достатній рівень (9)';
-            } else if (score >= 11) {
-                grade = 'Достатній рівень (8)';
-            } else if (score >= 10) {
-                grade = 'Достатній рівень (7)';
-            } else if (score >= 8) {
-                grade = 'Середній рівень (6)';
-            } else if (score >= 7) {
-                grade = 'Середній рівень (5)';
-            } else if (score >= 6) {
-                grade = 'Середній рівень (4)';
-            } else if (score >= 5) {
-                grade = 'Початковий рівень (3)';
-            } else if (score >= 3) {
-                grade = 'Початковий рівень (2)';
-            } else {
-                grade = 'Початковий рівень (1)';
-            }
+            const grade = getGrade(score);
 
             resultDiv.innerHTML = `
                 <h2>Результати тесту для ${studentName}</h2>
                 <p>Кількість правильних відповідей: ${score} з ${totalQuestions}</p>
                 <p>Оцінка: ${grade}</p>
             `;
-
-            // Відправка даних до Firestore
-            saveResultToFirestore(studentName, score, totalQuestions, grade);
+            // Видаляємо дані про поточний тест, оскільки він завершений
+            deleteDoc(ongoingTestRef).catch(e => console.error("Помилка видалення тимчасових даних:", e));
         }
 
-        async function saveResultToFirestore(name, score, total, grade) {
-            if (!db || !userId) {
-                console.error("Firestore не ініціалізовано або ідентифікатор користувача відсутній. Результати не будуть збережені.");
+        function endTestDueToFullscreenExit() {
+            quizContainer.style.display = 'none';
+            submitBtn.style.display = 'none';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <h2>Тест завершено</h2>
+                <p>Ви вийшли з повноекранного режиму. Тест автоматично завершено.</p>
+                <p>Будь ласка, зверніться до вчителя для повторного проходження.</p>
+            `;
+            deleteDoc(ongoingTestRef).catch(e => console.error("Помилка видалення тимчасових даних:", e));
+        }
+
+        function getGrade(score) {
+            if (score >= 16) return 'Високий рівень (12)';
+            if (score >= 15) return 'Високий рівень (11)';
+            if (score >= 14) return 'Високий рівень (10)';
+            if (score >= 12) return 'Достатній рівень (9)';
+            if (score >= 11) return 'Достатній рівень (8)';
+            if (score >= 10) return 'Достатній рівень (7)';
+            if (score >= 8) return 'Середній рівень (6)';
+            if (score >= 7) return 'Середній рівень (5)';
+            if (score >= 6) return 'Середній рівень (4)';
+            if (score >= 5) return 'Початковий рівень (3)';
+            if (score >= 3) return 'Початковий рівень (2)';
+            return 'Початковий рівень (1)';
+        }
+
+        async function saveResultToFirestore(name, score, total, grade, detailedResults) {
+            if (!db) {
+                console.error("Firestore не ініціалізовано. Результати не будуть збережені.");
                 return;
             }
             try {
-                // Використовуємо коректний шлях до колекції Firestore
-                const resultsCollection = collection(db, `artifacts/${appId}/users/${userId}/quiz_results`);
+                const resultsCollection = collection(db, `artifacts/${appId}/public/data/quiz_results`);
                 await addDoc(resultsCollection, {
                     studentName: name,
                     score: score,
                     totalQuestions: total,
                     grade: grade,
+                    detailedResults: detailedResults,
                     timestamp: new Date().toISOString()
                 });
                 console.log("Результати успішно збережено в Firestore.");
@@ -454,33 +574,52 @@
         }
 
         async function showTeacherView() {
-            registrationForm.style.display = 'none';
-            quizContainer.style.display = 'none';
-            submitBtn.style.display = 'none';
-            resultDiv.style.display = 'none';
+            teacherLogin.style.display = 'none';
             teacherView.style.display = 'block';
-            viewResultsBtn.style.display = 'none';
             resultsList.innerHTML = '<li>Завантаження результатів...</li>';
 
-            if (!db || !userId) {
-                console.error("Firestore не ініціалізовано або ідентифікатор користувача відсутній. Неможливо завантажити результати.");
+            if (!db) {
+                console.error("Firestore не ініціалізовано. Неможливо завантажити результати.");
                 resultsList.innerHTML = '<li>Не вдалося завантажити результати.</li>';
                 return;
             }
 
             try {
-                // Використовуємо коректний шлях до колекції Firestore
-                const resultsCollection = collection(db, `artifacts/${appId}/users/${userId}/quiz_results`);
+                const resultsCollection = collection(db, `artifacts/${appId}/public/data/quiz_results`);
                 const querySnapshot = await getDocs(resultsCollection);
                 
-                resultsList.innerHTML = ''; // Очистити список
+                resultsList.innerHTML = '';
                 if (querySnapshot.empty) {
                     resultsList.innerHTML = '<li>Результатів ще немає.</li>';
                 } else {
+                    const allResults = [];
                     querySnapshot.forEach((doc) => {
-                        const data = doc.data();
+                        allResults.push({ id: doc.id, data: doc.data() });
+                    });
+                    
+                    allResults.sort((a, b) => b.data.score - a.data.score);
+
+                    allResults.forEach((item) => {
+                        const data = item.data;
                         const li = document.createElement('li');
-                        li.textContent = `${data.studentName}: ${data.score} з ${data.totalQuestions} - Оцінка: ${data.grade}`;
+                        li.innerHTML = `
+                            <strong>${data.studentName}</strong>: ${data.score} з ${data.totalQuestions} - Оцінка: ${data.grade}
+                            <div class="detailed-results"></div>
+                        `;
+                        
+                        if (data.detailedResults && Array.isArray(data.detailedResults)) {
+                            const detailsContainer = li.querySelector('.detailed-results');
+                            data.detailedResults.forEach(qResult => {
+                                const detailItem = document.createElement('div');
+                                detailItem.classList.add('detailed-result-item');
+                                detailItem.innerHTML = `
+                                    <p class="question-text">Питання ${qResult.questionNumber}: ${qResult.questionText}</p>
+                                    <p>Відповідь учня: <span class="user-answer">${qResult.studentAnswer}</span></p>
+                                    <p>Правильна відповідь: <span class="correct-answer">${qResult.correctAnswer}</span></p>
+                                `;
+                                detailsContainer.appendChild(detailItem);
+                            });
+                        }
                         resultsList.appendChild(li);
                     });
                 }
