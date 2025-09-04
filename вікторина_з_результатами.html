@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест: Просвітництво (9 клас)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e9ecef;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            box-sizing: border-box;
+            color: #343a40;
+            line-height: 1.6;
+        }
+        .quiz-container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: transform 0.3s ease-in-out;
+        }
+        .quiz-container:hover {
+            transform: translateY(-5px);
+        }
+        h1 {
+            text-align: center;
+            color: #0056b3;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        #registration-form, #quiz, #result {
+            transition: all 0.5s ease-in-out;
+        }
+        #registration-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        #studentName {
+            width: 80%;
+            padding: 12px;
+            font-size: 1em;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+        #studentName:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        #startQuizBtn, #teacherPanelBtn, #viewResultsBtn {
+            padding: 12px 30px;
+            font-size: 1em;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        #startQuizBtn { background-color: #007bff; }
+        #startQuizBtn:hover { background-color: #0056b3; transform: translateY(-2px); }
+        #teacherPanelBtn { background-color: #6c757d; }
+        #teacherPanelBtn:hover { background-color: #5a6268; transform: translateY(-2px); }
+        .question-block {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+        }
+        .question-text {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        .answer-options {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .answer-option {
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 6px;
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .answer-option:hover {
+            background-color: #f1f3f5;
+            border-color: #adb5bd;
+        }
+        .answer-option input[type="radio"] {
+            margin-right: 12px;
+        }
+        #submitBtn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        #submitBtn:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+        #result {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 1.4em;
+            color: #17a2b8;
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 25px 45px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-size: 1.2em;
+            color: #dc3545;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+            border: 2px solid #dc3545;
+        }
+        #results-list {
+            list-style-type: none;
+            padding: 0;
+            text-align: left;
+            margin-top: 20px;
+        }
+        #results-list li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .error-message {
+            color: #dc3545;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            display: none;
+        }
+        #firebase-status {
+            text-align: center;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            color: #6c757d;
+        }
+        .status-connected {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        #teacher-login {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .detailed-result-item {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .detailed-result-item .question-text {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+        .detailed-result-item p {
+            margin: 5px 0;
+        }
+        .detailed-result-item .user-answer {
+            color: #007bff;
+        }
+        .detailed-result-item .correct-answer {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1>Тести з зарубіжної літератури. Просвітництво. 9 клас</h1>
+        <div id="firebase-status">Статус Firebase: З'єднання...</div>
+        <div id="registration-form">
+            <label for="studentName">Введіть ваше прізвище:</label>
+            <input type="text" id="studentName" placeholder="Наприклад, Шевченко" required>
+            <div id="name-error" class="error-message">Будь ласка, введіть ваше прізвище.</div>
+            <div class="btn-group">
+                <button id="startQuizBtn">Почати тест</button>
+                <button id="teacherPanelBtn">Панель вчителя</button>
+            </div>
+        </div>
+
+        <div id="quiz" style="display:none;"></div>
+        <button id="submitBtn" style="display:none;">Завершити тест</button>
+        <div id="result" style="display:none;"></div>
+
+        <div id="teacher-login">
+            <h2>Доступ для вчителя</h2>
+            <p>Введіть пароль, щоб переглянути результати:</p>
+            <input type="password" id="teacher-password" placeholder="Пароль">
+            <div id="password-error" class="error-message">Неправильний пароль.</div>
+            <button id="viewResultsBtn">Переглянути результати</button>
+        </div>
+
+        <div id="teacher-view" style="display:none;">
+            <h2>Збережені результати</h2>
+            <ul id="results-list"></ul>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDoc, setDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        const firebaseConfig = {
+          apiKey: "AIzaSyAQBfq2q04-D3QYutz5kY82DgjxCx89Pxw",
+          authDomain: "тест-просвітництво-9клас.firebaseapp.com",
+          projectId: "тест-просвітництво-9клас",
+          storageBucket: "тест-просвітництво-9клас.appspot.com",
+          messagingSenderId: "276370428402",
+          appId: "1:276370428402:web:118e7e1704279b9a527c24"
+        };
+        
+        let app;
+        let db;
+        let auth;
+        
+        const quizData = {
+            "questions": [
+                { "questionNumber": 1, "question": "Який період в історії європейської культури та ідеології називають Просвітництвом?", "answerOptions": [ { "text": "XV-XVI ст.", "isCorrect": false }, { "text": "XIX ст.", "isCorrect": false }, { "text": "XVII-XVIII ст.", "isCorrect": true }, { "text": "X-XIII ст.", "isCorrect": false } ] },
+                { "questionNumber": 2, "question": "Що є центральною ідеєю філософії Просвітництва?", "answerOptions": [ { "text": "Заперечення людського розуму та перевага релігійної віри.", "isCorrect": false }, { "text": "Ідея про неминучу загибель цивілізації.", "isCorrect": false }, { "text": "Верховенство людського розуму та віра в прогрес.", "isCorrect": true }, { "text": "Культ античних богів та міфології.", "isCorrect": false } ] },
+                { "questionNumber": 3, "question": "Представником якого літературного напряму епохи Просвітництва був Даніель Дефо?", "answerOptions": [ { "text": "Класицизм", "isCorrect": false }, { "text": "Романтизм", "isCorrect": false }, { "text": "Сентименталізм", "isCorrect": false }, { "text": "Просвітницький реалізм", "isCorrect": true } ] },
+                { "questionNumber": 4, "question": "Який філософ Просвітництва висунув ідею \"розподілу влади\" на законодавчу, виконавчу та судову?", "answerOptions": [ { "text": "Жан-Жак Руссо", "isCorrect": false }, { "text": "Джон Локк", "isCorrect": false }, { "text": "Монтеск'є", "isCorrect": true }, { "text": "Вольтер", "isCorrect": false } ] },
+                { "questionNumber": 5, "question": "Із якою країною найчастіше асоціюється так зване \"високе Просвітництво\"?", "answerOptions": [ { "text": "Німеччина", "isCorrect": false }, { "text": "Англія", "isCorrect": false }, { "text": "Франція", "isCorrect": true }, { "text": "США", "isCorrect": false } ] },
+                { "questionNumber": 6, "question": "Яка мета стояла перед мислителями Просвітництва щодо людини?", "answerOptions": [ { "text": "Закріпити традиційні суспільні норми.", "isCorrect": false }, { "text": "Зробити людину віруючою.", "isCorrect": false }, { "text": "Звільнити людину від невігластва і забобонів.", "isCorrect": true }, { "text": "Повернутися до ідеалів Середньовіччя.", "isCorrect": false } ] },
+                { "questionNumber": 7, "question": "Який винахід значно прискорив поширення ідей Просвітництва?", "answerOptions": [ { "text": "Телескоп", "isCorrect": false }, { "text": "Друкарський верстат", "isCorrect": true }, { "text": "Паровий двигун", "isCorrect": false }, { "text": "Компас", "isCorrect": false } ] },
+                { "questionNumber": 8, "question": "Яка подія вважається історичним наслідком ідей Просвітництва?", "answerOptions": [ { "text": "Хрестові походи", "isCorrect": false }, { "text": "Ренесанс", "isCorrect": false }, { "text": "Французька революція", "isCorrect": true }, { "text": "Падіння Римської імперії", "isCorrect": false } ] },
+                { "questionNumber": 9, "question": "Який жанр був найпопулярнішим в епоху Просвітництва?", "answerOptions": [ { "text": "Ода", "isCorrect": false }, { "text": "Роман", "isCorrect": true }, { "text": "Епос", "isCorrect": false }, { "text": "Трагедія", "isCorrect": false } ] },
+                { "questionNumber": 10, "question": "Кого з просвітників називали 'патріархом' через його поважний вік, авторитет і вплив на сучасників?", "answerOptions": [ { "text": "Жан-Жак Руссо", "isCorrect": false }, { "text": "Джонатан Свіфт", "isCorrect": false }, { "text": "Вольтер", "isCorrect": true }, { "text": "Йоганн Вольфганг фон Гете", "isCorrect": false } ] },
+                { "questionNumber": 11, "question": "Яка головна мета 'Енциклопедії' Дідро і д’Аламбера?", "answerOptions": [ { "text": "Зробити знання доступними для широких мас, поширити ідеї розуму та науки.", "isCorrect": true }, { "text": "Створити збірник законів для європейських монархій.", "isCorrect": false }, { "text": "Прославити діяння королів та імператорів.", "isCorrect": false } ] },
+                { "questionNumber": 12, "question": "Яка з перерахованих особливостей не є характерною для Просвітництва?", "answerOptions": [ { "text": "Критика феодального ладу та церкви.", "isCorrect": false }, { "text": "Пріоритет почуттів і емоцій над розумом.", "isCorrect": true }, { "text": "Віра в суспільний прогрес.", "isCorrect": false }, { "text": "Прагнення до свободи та рівності.", "isCorrect": false } ] },
+                { "questionNumber": 13, "question": "Що, на думку просвітників, є головним джерелом пізнання істини?", "answerOptions": [ { "text": "Божественне одкровення", "isCorrect": false }, { "text": "Досвід і розум", "isCorrect": true }, { "text": "Авторитет традицій", "isCorrect": false }, { "text": "Почуття", "isCorrect": false } ] },
+                { "questionNumber": 14, "question": "Ім'я якого німецького письменника пов'язане з ідеями 'Бурі та натиску', що передували німецькому романтизму?", "answerOptions": [ { "text": "Фрідріх Шиллер", "isCorrect": false }, { "text": "Йоганн Вольфганг фон Гете", "isCorrect": false }, { "text": "Вольтер", "isCorrect": false }, { "text": "Обидва (Шиллер та Гете)", "isCorrect": true } ] },
+                { "questionNumber": 15, "question": "Просвітництво в Німеччині тісно пов’язане з...", "answerOptions": [ { "text": "Французькою революцією.", "isCorrect": false }, { "text": "Російською імперією.", "isCorrect": false }, { "text": "Веймарським класицизмом.", "isCorrect": true }, { "text": "Британською колонізацією.", "isCorrect": false } ] },
+                { "questionNumber": 16, "question": "Хто з перелічених авторів не належить до доби Просвітництва?", "answerOptions": [ { "text": "Вольтер", "isCorrect": false }, { "text": "Йоганн Вольфганг фон Гете", "isCorrect": false }, { "text": "Вільям Шекспір", "isCorrect": true }, { "text": "Джонатан Свіфт", "isCorrect": false } ] }
+            ]
+        };
+
+        const studentNameInput = document.getElementById('studentName');
+        const startQuizBtn = document.getElementById('startQuizBtn');
+        const teacherPanelBtn = document.getElementById('teacherPanelBtn');
+        const registrationForm = document.getElementById('registration-form');
+        const quizContainer = document.getElementById('quiz');
+        const submitBtn = document.getElementById('submitBtn');
+        const resultDiv = document.getElementById('result');
+        const quizMainContainer = document.querySelector('.quiz-container');
+        const teacherLogin = document.getElementById('teacher-login');
+        const teacherView = document.getElementById('teacher-view');
+        const resultsList = document.getElementById('results-list');
+        const nameError = document.getElementById('name-error');
+        const firebaseStatus = document.getElementById('firebase-status');
+        const teacherPasswordInput = document.getElementById('teacher-password');
+        const viewResultsBtn = document.getElementById('viewResultsBtn');
+        const passwordError = document.getElementById('password-error');
+        
+        const TEACHER_PASSWORD = '988';
+
+        let studentName = '';
+        let score = 0;
+        let ongoingTestRef;
+        let quizActive = false; 
+
+        async function initializeFirebase() {
+            try {
+                if (!firebaseConfig.apiKey) {
+                    throw new Error("Конфігурація Firebase не знайдена. Будь ласка, вставте її в код.");
+                }
+
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                await signInAnonymously(auth);
+                
+                firebaseStatus.textContent = 'Статус Firebase: Підключено';
+                firebaseStatus.classList.add('status-connected');
+                console.log('Firebase успішно ініціалізовано.');
+            } catch (error) {
+                firebaseStatus.textContent = 'Статус Firebase: Помилка підключення';
+                firebaseStatus.classList.add('status-error');
+                console.error("Помилка ініціалізації Firebase:", error);
+            }
+        }
+
+        initializeFirebase();
+
+        startQuizBtn.addEventListener('click', () => {
+            studentName = studentNameInput.value.trim();
+            if (studentName) {
+                nameError.style.display = 'none';
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().then(() => {
+                        startTest();
+                    }).catch(err => {
+                        console.error(`Помилка під час спроби увімкнути повноекранний режим: ${err.message}. Тест буде запущено в звичайному режимі.`);
+                        startTest();
+                    });
+                } else {
+                    console.warn('Fullscreen API не підтримується у цьому браузері. Тест буде запущено в звичайному режимі.');
+                    startTest();
+                }
+            } else {
+                nameError.style.display = 'block';
+            }
+        });
+
+        teacherPanelBtn.addEventListener('click', () => {
+            registrationForm.style.display = 'none';
+            teacherLogin.style.display = 'flex';
+        });
+
+        viewResultsBtn.addEventListener('click', () => {
+            const password = teacherPasswordInput.value.trim();
+            if (password === TEACHER_PASSWORD) {
+                passwordError.style.display = 'none';
+                showTeacherView();
+            } else {
+                passwordError.style.display = 'block';
+            }
+        });
+
+        async function startTest() {
+            quizMainContainer.classList.add('show');
+            registrationForm.style.display = 'none';
+            quizContainer.style.display = 'block';
+            submitBtn.style.display = 'block';
+            
+            ongoingTestRef = doc(db, 'ongoing_quizzes', studentName);
+            const ongoingTestSnap = await getDoc(ongoingTestRef);
+
+            if (ongoingTestSnap.exists()) {
+                const savedData = ongoingTestSnap.data();
+                console.log("Відновлюємо тест із збережених даних:", savedData);
+                loadQuiz(savedData.answers || {});
+                score = savedData.score || 0;
+            } else {
+                console.log("Починаємо новий тест.");
+                loadQuiz({});
+                await setDoc(ongoingTestRef, {
+                    studentName: studentName,
+                    answers: {},
+                    score: 0,
+                    totalQuestions: quizData.questions.length,
+                    timestamp: new Date().toISOString()
+                });
+            }
+            quizActive = true; 
+        }
+
+        submitBtn.addEventListener('click', async () => {
+            await checkAnswersAndSave();
+            showResults();
+        });
+
+        function loadQuiz(savedAnswers) {
+            quizContainer.innerHTML = ''; 
+            quizData.questions.forEach((q, index) => {
+                const questionBlock = document.createElement('div');
+                questionBlock.classList.add('question-block');
+                questionBlock.innerHTML = `
+                    <p class="question-text">${q.questionNumber}. ${q.question}</p>
+                    <ul class="answer-options">
+                        ${q.answerOptions.map((option, i) => `
+                            <li class="answer-option">
+                                <input type="radio" id="q${index}-option${i}" name="question${index}" value="${i}" ${savedAnswers[index] == i ? 'checked' : ''}>
+                                <label for="q${index}-option${i}">${option.text}</label>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+                quizContainer.appendChild(questionBlock);
+
+                const radioButtons = questionBlock.querySelectorAll(`input[name="question${index}"]`);
+                radioButtons.forEach(radio => {
+                    radio.addEventListener('change', (e) => {
+                        const newAnswer = parseInt(e.target.value);
+                        saveProgress(index, newAnswer);
+                    });
+                });
+            });
+        }
+
+        async function saveProgress(questionIndex, selectedAnswer) {
+            const currentAnswers = {};
+            quizData.questions.forEach((q, index) => {
+                const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
+                if (selectedOption) {
+                    currentAnswers[index] = parseInt(selectedOption.value);
+                }
+            });
+            let currentScore = 0;
+            for (const key in currentAnswers) {
+                if (quizData.questions[key].answerOptions[currentAnswers[key]].isCorrect) {
+                    currentScore++;
+                }
+            }
+            score = currentScore;
+            try {
+                await setDoc(ongoingTestRef, {
+                    studentName: studentName,
+                    answers: currentAnswers,
+                    score: currentScore,
+                    totalQuestions: quizData.questions.length,
+                    timestamp: new Date().toISOString()
+                });
+                console.log("Прогрес успішно збережено.");
+            } catch (e) {
+                console.error("Помилка при збереженні прогресу: ", e);
+            }
+        }
+
+        async function checkAnswersAndSave() {
+            score = 0;
+            const finalAnswers = {};
+            const detailedResults = [];
+            quizData.questions.forEach((q, index) => {
+                const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
+                let studentAnswerText = 'Не обрано';
+                let isCorrect = false;
+
+                if (selectedOption) {
+                    const selectedAnswerIndex = parseInt(selectedOption.value);
+                    studentAnswerText = q.answerOptions[selectedAnswerIndex].text;
+                    isCorrect = q.answerOptions[selectedAnswerIndex].isCorrect;
+                    finalAnswers[index] = selectedAnswerIndex;
+                    if (isCorrect) {
+                        score++;
+                    }
+                }
+
+                const correctAnswerText = q.answerOptions.find(opt => opt.isCorrect).text;
+
+                detailedResults.push({
+                    questionNumber: q.questionNumber,
+                    questionText: q.question,
+                    studentAnswer: studentAnswerText,
+                    correctAnswer: correctAnswerText,
+                    isCorrect: isCorrect
+                });
+            });
+            await saveResultToFirestore(studentName, score, quizData.questions.length, getGrade(score), detailedResults);
+        }
+
+        function showResults() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+
+            quizContainer.style.display = 'none';
+            submitBtn.style.display = 'none';
+            resultDiv.style.display = 'block';
+
+            const totalQuestions = quizData.questions.length;
+            const grade = getGrade(score);
+
+            resultDiv.innerHTML = `
+                <h2>Результати тесту для ${studentName}</h2>
+                <p>Кількість правильних відповідей: ${score} з ${totalQuestions}</p>
+                <p>Оцінка: ${grade}</p>
+            `;
+            deleteDoc(ongoingTestRef).catch(e => console.error("Помилка видалення тимчасових даних:", e));
+        }
+
+        function getGrade(score) {
+            if (score >= 16) return 'Високий рівень (12)';
+            if (score >= 15) return 'Високий рівень (11)';
+            if (score >= 14) return 'Високий рівень (10)';
+            if (score >= 12) return 'Достатній рівень (9)';
+            if (score >= 11) return 'Достатній рівень (8)';
+            if (score >= 10) return 'Достатній рівень (7)';
+            if (score >= 8) return 'Середній рівень (6)';
+            if (score >= 7) return 'Середній рівень (5)';
+            if (score >= 6) return 'Середній рівень (4)';
+            if (score >= 5) return 'Початковий рівень (3)';
+            if (score >= 3) return 'Початковий рівень (2)';
+            return 'Початковий рівень (1)';
+        }
+
+        async function saveResultToFirestore(name, score, total, grade, detailedResults) {
+            if (!db) {
+                console.error("Firestore не ініціалізовано. Результати не будуть збережені.");
+                return;
+            }
+            try {
+                const resultsCollection = collection(db, 'quiz_results');
+                await addDoc(resultsCollection, {
+                    studentName: name,
+                    score: score,
+                    totalQuestions: total,
+                    grade: grade,
+                    detailedResults: detailedResults,
+                    timestamp: new Date().toISOString()
+                });
+                console.log("Результати успішно збережено в Firestore.");
+            } catch (e) {
+                console.error("Помилка при збереженні результатів в Firestore: ", e);
+            }
+        }
+
+        async function showTeacherView() {
+            teacherLogin.style.display = 'none';
+            teacherView.style.display = 'block';
+            resultsList.innerHTML = '<li>Завантаження результатів...</li>';
+
+            if (!db) {
+                console.error("Firestore не ініціалізовано. Неможливо завантажити результати.");
+                resultsList.innerHTML = '<li>Не вдалося завантажити результати.</li>';
+                return;
+            }
+
+            try {
+                const resultsCollection = collection(db, 'quiz_results');
+                const querySnapshot = await getDocs(resultsCollection);
+                
+                resultsList.innerHTML = '';
+                if (querySnapshot.empty) {
+                    resultsList.innerHTML = '<li>Результатів ще немає.</li>';
+                } else {
+                    const allResults = [];
+                    querySnapshot.forEach((doc) => {
+                        allResults.push({ id: doc.id, data: doc.data() });
+                    });
+                    
+                    allResults.sort((a, b) => b.data.score - a.data.score);
+
+                    allResults.forEach((item) => {
+                        const data = item.data;
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <strong>${data.studentName}</strong>: ${data.score} з ${data.totalQuestions} - Оцінка: ${data.grade}
+                            <div class="detailed-results"></div>
+                        `;
+                        
+                        if (data.detailedResults && Array.isArray(data.detailedResults)) {
+                            const detailsContainer = li.querySelector('.detailed-results');
+                            data.detailedResults.forEach(qResult => {
+                                const detailItem = document.createElement('div');
+                                detailItem.classList.add('detailed-result-item');
+                                detailItem.innerHTML = `
+                                    <p class="question-text">Питання ${qResult.questionNumber}: ${qResult.questionText}</p>
+                                    <p>Відповідь учня: <span class="user-answer">${qResult.studentAnswer}</span></p>
+                                    <p>Правильна відповідь: <span class="correct-answer">${qResult.correctAnswer}</span></p>
+                                `;
+                                detailsContainer.appendChild(detailItem);
+                            });
+                        }
+                        resultsList.appendChild(li);
+                    });
+                }
+                
+            } catch (e) {
+                console.error("Помилка при завантаженні результатів: ", e);
+                resultsList.innerHTML = '<li>Помилка при завантаженні результатів.</li>';
+            }
+        }
+
+        window.onload = function() {
+            quizMainContainer.classList.add('show');
+        }
+    </script>
+</body>
+</html>
