@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест: Просвітництво (9 клас) (20 запитань)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+        }
+        .quiz-container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: transform 0.3s ease-in-out;
+            opacity: 1;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #1a237e;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        .intro-form {
+            text-align: center;
+        }
+        #studentName {
+            width: 80%;
+            max-width: 300px;
+            padding: 12px;
+            font-size: 1em;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+        #studentName:focus {
+            outline: none;
+            border-color: #1a237e;
+        }
+        .start-btn, #submitBtn {
+            padding: 12px 30px;
+            font-size: 1em;
+            color: #fff;
+            background-color: #43a047;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+        .start-btn:hover, #submitBtn:hover {
+            background-color: #2e7d32;
+            transform: translateY(-2px);
+        }
+        .question-block {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background-color: #fafafa;
+        }
+        .question-text {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        .answer-options {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .answer-option {
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 6px;
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            transition: background-color 0.2s, border-color 0.2s;
+            cursor: pointer;
+        }
+        .answer-option:hover {
+            background-color: #f1f3f5;
+            border-color: #adb5bd;
+        }
+        .answer-option input[type="radio"] {
+            margin-right: 12px;
+        }
+        #timer-display {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #d32f2f;
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .results-section {
+            margin-top: 40px;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .results-table th, .results-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .results-table th {
+            background-color: #e8eaf6;
+            color: #1a237e;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .teacher-view-btn, .clear-results-btn {
+            background-color: #1a237e;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .teacher-view-btn:hover {
+            background-color: #0d47a1;
+        }
+        .clear-results-btn {
+            background-color: #d32f2f;
+        }
+        .clear-results-btn:hover {
+            background-color: #b71c1c;
+        }
+        .user-id-display {
+            font-size: 0.8em;
+            color: #666;
+            text-align: center;
+            margin-top: 20px;
+        }
+        #message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        #message-box p {
+            margin: 0 0 15px 0;
+        }
+        #message-box button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #43a047;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1>Тести з зарубіжної літератури. Просвітництво. 9 клас</h1>
+        <div id="intro-section">
+            <div class="intro-form">
+                <label for="studentName">Введіть ваше прізвище:</label>
+                <input type="text" id="studentName" placeholder="Наприклад, Шевченко" required>
+                <button class="start-btn" id="startQuizBtn">Почати тест</button>
+            </div>
+            <p class="user-id-display hidden" id="userIdDisplay"></p>
+            <div class="button-group">
+                <button class="teacher-view-btn" id="teacherViewBtn">Показати результати для вчителя</button>
+                <button class="clear-results-btn" id="clearResultsBtn">Очистити всі результати</button>
+            </div>
+        </div>
+
+        <div id="quiz-section" class="hidden">
+            <div id="timer-display"></div>
+            <div id="questions-container"></div>
+            <button id="submitBtn">Завершити тест</button>
+        </div>
+        
+        <div id="result-display" class="hidden"></div>
+        <div id="results-table-container" class="results-section hidden">
+            <h2>Результати тестування</h2>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Прізвище</th>
+                        <th>Результат</th>
+                        <th>Дата</th>
+                    </tr>
+                </thead>
+                <tbody id="results-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div id="message-box" class="hidden">
+        <p id="message-text"></p>
+        <button id="message-ok-btn">OK</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const quizData = {
+                "questions": [
+                    { "questionNumber": 1, "question": "Який період в історії європейської культури та ідеології називають Просвітництвом?", "answerOptions": [ { "text": "XV-XVI ст.", "isCorrect": false }, { "text": "XIX ст.", "isCorrect": false }, { "text": "XVII-XVIII ст.", "isCorrect": true }, { "text": "X-XIII ст.", "isCorrect": false } ] },
+                    { "questionNumber": 2, "question": "Що є центральною ідеєю філософії Просвітництва?", "answerOptions": [ { "text": "Заперечення людського розуму та перевага релігійної віри.", "isCorrect": false }, { "text": "Ідея про неминучу загибель цивілізації.", "isCorrect": false }, { "text": "Верховенство людського розуму та віра в прогрес.", "isCorrect": true }, { "text": "Культ античних богів та міфології.", "isCorrect": false } ] },
+                    { "questionNumber": 3, "question": "Який філософ Просвітництва висунув ідею \"розподілу влади\" на законодавчу, виконавчу та судову?", "answerOptions": [ { "text": "Жан-Жак Руссо", "isCorrect": false }, { "text": "Джон Локк", "isCorrect": false }, { "text": "Монтеск'є", "isCorrect": true }, { "text": "Вольтер", "isCorrect": false } ] },
+                    { "questionNumber": 4, "question": "Яка головна мета 'Енциклопедії' Дідро і д’Аламбера?", "answerOptions": [ { "text": "Зробити знання доступними для широких мас, поширити ідеї розуму та науки.", "isCorrect": true }, { "text": "Створити збірник законів для європейських монархій.", "isCorrect": false }, { "text": "Прославити діяння королів та імператорів.", "isCorrect": false } ] },
+                    { "questionNumber": 5, "question": "Який жанр був найпопулярнішим в епоху Просвітництва?", "answerOptions": [ { "text": "Ода", "isCorrect": false }, { "text": "Роман", "isCorrect": true }, { "text": "Епос", "isCorrect": false }, { "text": "Трагедія", "isCorrect": false } ] },
+                    { "questionNumber": 6, "question": "Кого з просвітників називали 'патріархом' через його поважний вік, авторитет і вплив на сучасників?", "answerOptions": [ { "text": "Жан-Жак Руссо", "isCorrect": false }, { "text": "Джонатан Свіфт", "isCorrect": false }, { "text": "Вольтер", "isCorrect": true }, { "text": "Йоганн Вольфганг фон Гете", "isCorrect": false } ] },
+                    { "questionNumber": 7, "question": "Що, на думку просвітників, є головним джерелом пізнання істини?", "answerOptions": [ { "text": "Божественне одкровення", "isCorrect": false }, { "text": "Досвід і розум", "isCorrect": true }, { "text": "Авторитет традицій", "isCorrect": false }, { "text": "Почуття", "isCorrect": false } ] },
+                    { "questionNumber": 8, "question": "Із якою країною найчастіше асоціюється так зване \"високе Просвітництво\"?", "answerOptions": [ { "text": "Німеччина", "isCorrect": false }, { "text": "Англія", "isCorrect": false }, { "text": "Франція", "isCorrect": true }, { "text": "США", "isCorrect": false } ] },
+                    { "questionNumber": 9, "question": "Кого вважають засновником просвітницького реалізму?", "answerOptions": [ { "text": "Джонатан Свіфт", "isCorrect": false }, { "text": "Вольтер", "isCorrect": false }, { "text": "Даніель Дефо", "isCorrect": true }, { "text": "Дені Дідро", "isCorrect": false } ] },
+                    { "questionNumber": 10, "question": "Який твір є пародією на \"оптимізм\" та філософські ідеї Лейбніца?", "answerOptions": [ { "text": "«Робінзон Крузо»", "isCorrect": false }, { "text": "«Подорожі Гуллівера»", "isCorrect": false }, { "text": "«Кандид, або Оптимізм»", "isCorrect": true }, { "text": "«Фауст»", "isCorrect": false } ] },
+                    { "questionNumber": 11, "question": "В якому творі зображено головного героя, який потрапляє на острів і виживає завдяки своїм розумовим здібностям?", "answerOptions": [ { "text": "«Подорожі Гуллівера»", "isCorrect": false }, { "text": "«Кандид»", "isCorrect": false }, { "text": "«Робінзон Крузо»", "isCorrect": true }, { "text": "«Фауст»", "isCorrect": false } ] },
+                    { "questionNumber": 12, "question": "Як називається філософський рух у Німеччині, який є попередником романтизму?", "answerOptions": [ { "text": "Класицизм", "isCorrect": false }, { "text": "Сентименталізм", "isCorrect": false }, { "text": "Буря і натиск", "isCorrect": true }, { "text": "Реалізм", "isCorrect": false } ] },
+                    { "questionNumber": 13, "question": "Хто є автором знаменитого роману-утопії «Подорожі Гуллівера»?", "answerOptions": [ { "text": "Даніель Дефо", "isCorrect": false }, { "text": "Вольтер", "isCorrect": false }, { "text": "Йоганн Вольфганг фон Гете", "isCorrect": false }, { "text": "Джонатан Свіфт", "isCorrect": true } ] },
+                    { "questionNumber": 14, "question": "Яка головна ідея трагедії Гете «Фауст»?", "answerOptions": [ { "text": "Критика релігійного фанатизму.", "isCorrect": false }, { "text": "Віра в безмежні можливості людського розуму та прагнення до пізнання.", "isCorrect": true }, { "text": "Заперечення прогресу.", "isCorrect": false }, { "text": "Прославлення аристократичного суспільства.", "isCorrect": false } ] },
+                    { "questionNumber": 15, "question": "Хто з перелічених авторів не належить до доби Просвітництва?", "answerOptions": [ { "text": "Вольтер", "isCorrect": false }, { "text": "Йоганн Вольфганг фон Гете", "isCorrect": false }, { "text": "Вільям Шекспір", "isCorrect": true }, { "text": "Джонатан Свіфт", "isCorrect": false } ] },
+                    { "questionNumber": 16, "question": "Яку роль відігравали літературні салони в поширенні ідей Просвітництва?", "answerOptions": [ { "text": "Вони були місцями для політичних інтриг.", "isCorrect": false }, { "text": "Вони були закритими клубами для аристократії.", "isCorrect": false }, { "text": "Вони сприяли обміну ідеями між філософами, письменниками та інтелектуалами.", "isCorrect": true }, { "text": "Вони були центрами театрального мистецтва.", "isCorrect": false } ] },
+                    { "questionNumber": 17, "question": "Яка з ідей Жан-Жака Руссо була ключовою для Французької революції?", "answerOptions": [ { "text": "Ідея абсолютної монархії.", "isCorrect": false }, { "text": "Ідея про природні права та суспільний договір.", "isCorrect": true }, { "text": "Ідея про поділ влади.", "isCorrect": false }, { "text": "Ідея про перевагу індивідуального над суспільним.", "isCorrect": false } ] },
+                    { "questionNumber": 18, "question": "Просвітництво в Німеччині тісно пов’язане з...", "answerOptions": [ { "text": "Французькою революцією.", "isCorrect": false }, { "text": "Російською імперією.", "isCorrect": false }, { "text": "Веймарським класицизмом.", "isCorrect": true }, { "text": "Британською колонізацією.", "isCorrect": false } ] },
+                    { "questionNumber": 19, "question": "Що стало основним джерелом доходів для письменників-просвітників?", "answerOptions": [ { "text": "Державні субсидії", "isCorrect": false }, { "text": "Публікація творів та продаж книг", "isCorrect": true }, { "text": "Спадщина від батьків", "isCorrect": false }, { "text": "Доходи від земельних володінь", "isCorrect": false } ] },
+                    { "questionNumber": 20, "question": "Які суспільні прошарки активно підтримували та поширювали ідеї Просвітництва?", "answerOptions": [ { "text": "Дворянство та вище духовенство.", "isCorrect": false }, { "text": "Робітники та селяни.", "isCorrect": false }, { "text": "Буржуазія та інтелігенція.", "isCorrect": true }, { "text": "Лише королівські сім'ї.", "isCorrect": false } ] }
+                ]
+            };
+    
+            const introSection = document.getElementById('intro-section');
+            const studentNameInput = document.getElementById('studentName');
+            const startQuizBtn = document.getElementById('startQuizBtn');
+            const quizSection = document.getElementById('quiz-section');
+            const questionsContainer = document.getElementById('questions-container');
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDisplay = document.getElementById('result-display');
+            const timerDisplay = document.getElementById('timer-display');
+            const teacherViewBtn = document.getElementById('teacherViewBtn');
+            const clearResultsBtn = document.getElementById('clearResultsBtn');
+            const resultsTableContainer = document.getElementById('results-table-container');
+            const resultsTableBody = document.getElementById('results-table-body');
+            const messageBox = document.getElementById('message-box');
+            const messageText = document.getElementById('message-text');
+            const messageOkBtn = document.getElementById('message-ok-btn');
+    
+            const TIME_LIMIT = 300;
+            let timeRemaining = TIME_LIMIT;
+            let timerInterval;
+            let quizStarted = false;
+    
+            startQuizBtn.addEventListener('click', () => {
+                const studentName = studentNameInput.value.trim();
+                if (studentName) {
+                    introSection.classList.add('hidden');
+                    quizSection.classList.remove('hidden');
+                    quizStarted = true;
+                    startTimer();
+                    loadQuiz();
+                } else {
+                    showMessage("Будь ласка, введіть ваше прізвище.");
+                }
+            });
+    
+            submitBtn.addEventListener('click', () => {
+                checkAnswersAndSubmit();
+            });
+    
+            teacherViewBtn.addEventListener('click', () => {
+                introSection.classList.add('hidden');
+                quizSection.classList.add('hidden');
+                resultDisplay.classList.add('hidden');
+                resultsTableContainer.classList.remove('hidden');
+                fetchAndDisplayResults();
+            });
+    
+            clearResultsBtn.addEventListener('click', () => {
+                clearAllResults();
+            });
+    
+            messageOkBtn.addEventListener('click', () => {
+                messageBox.classList.add('hidden');
+            });
+    
+            function showMessage(text) {
+                messageText.textContent = text;
+                messageBox.classList.remove('hidden');
+            }
+            
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+    
+            function loadQuiz() {
+                const shuffledQuestions = shuffleArray([...quizData.questions]);
+                questionsContainer.innerHTML = '';
+                shuffledQuestions.forEach((q, index) => {
+                    const questionBlock = document.createElement('div');
+                    questionBlock.classList.add('question-block');
+                    const shuffledOptions = shuffleArray([...q.answerOptions]);
+                    questionBlock.innerHTML = `
+                        <p class="question-text">${index + 1}. ${q.question}</p>
+                        <ul class="answer-options">
+                            ${shuffledOptions.map((option, i) => `
+                                <li class="answer-option">
+                                    <input type="radio" id="q${index}-option${i}" name="question${index}" value="${shuffledOptions.findIndex(o => o.text === option.text)}">
+                                    <label for="q${index}-option${i}">${option.text}</label>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    `;
+                    questionsContainer.appendChild(questionBlock);
+                });
+            }
+            
+            function checkAnswersAndSubmit() {
+                clearInterval(timerInterval);
+                let score = 0;
+                const totalQuestions = quizData.questions.length;
+                
+                const shuffledQuestions = Array.from(questionsContainer.children).map(node => {
+                    const text = node.querySelector('.question-text').textContent.substring(3).trim();
+                    return quizData.questions.find(q => q.question === text);
+                });
+
+                shuffledQuestions.forEach((q, index) => {
+                    const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
+                    if (selectedOption) {
+                        const selectedAnswerText = document.querySelector(`label[for="${selectedOption.id}"]`).textContent.trim();
+                        if (q.answerOptions.find(option => option.text === selectedAnswerText)?.isCorrect) {
+                            score++;
+                        }
+                    }
+                });
+                
+                showResults(score, totalQuestions);
+                saveResult(studentNameInput.value, score, totalQuestions);
+            }
+    
+            function showResults(score, total) {
+                quizSection.classList.add('hidden');
+                resultDisplay.classList.remove('hidden');
+    
+                const grade = getGrade(score);
+    
+                resultDisplay.innerHTML = `
+                    <h2>Тест завершено!</h2>
+                    <p>Кількість правильних відповідей: ${score} з ${total}</p>
+                    <p>Оцінка: ${grade}</p>
+                `;
+            }
+    
+            function getGrade(score) {
+                if (score >= 20) return '12';
+                if (score >= 18) return '11';
+                if (score >= 16) return '10';
+                if (score >= 14) return '9';
+                if (score >= 12) return '8';
+                if (score >= 10) return '7';
+                if (score >= 8) return '6';
+                if (score >= 6) return '5';
+                if (score >= 4) return '4';
+                if (score >= 2) return '3';
+                return '2';
+            }
+    
+            function startTimer() {
+                timerInterval = setInterval(() => {
+                    timeRemaining--;
+                    const minutes = Math.floor(timeRemaining / 60);
+                    const seconds = timeRemaining % 60;
+                    timerDisplay.textContent = `Час: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    if (timeRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        checkAnswersAndSubmit();
+                    }
+                }, 1000);
+            }
+    
+            function saveResult(name, score, total) {
+                try {
+                    const results = JSON.parse(localStorage.getItem('quizResults')) || [];
+                    results.push({
+                        studentName: name,
+                        score: score,
+                        totalQuestions: total,
+                        grade: getGrade(score),
+                        timestamp: new Date().toISOString()
+                    });
+                    localStorage.setItem('quizResults', JSON.stringify(results));
+                } catch (e) {
+                    console.error("Error saving result to local storage: ", e);
+                }
+            }
+    
+            function fetchAndDisplayResults() {
+                try {
+                    const results = JSON.parse(localStorage.getItem('quizResults')) || [];
+                    renderResultsTable(results);
+                } catch (e) {
+                    console.error("Error fetching results from local storage: ", e);
+                    resultsTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:red;">Помилка завантаження результатів.</td></tr>';
+                }
+            }
+    
+            function renderResultsTable(results) {
+                resultsTableBody.innerHTML = '';
+                if (results.length === 0) {
+                    resultsTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Результати поки відсутні.</td></tr>';
+                    return;
+                }
+    
+                results.sort((a, b) => {
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                });
+    
+                results.forEach(result => {
+                    const row = document.createElement('tr');
+                    const date = result.timestamp ? new Date(result.timestamp).toLocaleString('uk-UA') : 'N/A';
+                    row.innerHTML = `
+                        <td>${result.studentName}</td>
+                        <td>${result.score} / ${result.totalQuestions} (${result.grade})</td>
+                        <td>${date}</td>
+                    `;
+                    resultsTableBody.appendChild(row);
+                });
+            }
+    
+            function clearAllResults() {
+                showMessage("Ви впевнені, що хочете видалити всі результати? Цю дію неможливо скасувати.");
+                messageOkBtn.onclick = async () => {
+                    messageBox.classList.add('hidden');
+                    try {
+                        localStorage.removeItem('quizResults');
+                        fetchAndDisplayResults();
+                        showMessage("Усі результати успішно видалено!");
+                    } catch (error) {
+                        showMessage("Помилка при видаленні результатів. Спробуйте ще раз.");
+                        console.error("Error removing results: ", error);
+                    }
+                };
+            }
+        });
+    </script>
+</body>
+</html>
